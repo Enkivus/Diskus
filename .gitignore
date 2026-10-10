@@ -50,6 +50,11 @@ src-tauri/gen/apple/
 src-tauri/ios/Pods/
 src-tauri/ios/Podfile.lock
 src-tauri/Cargo.lock.bak
+
+# `npm run tauri icon` regenerates mobile assets, but Diskus is desktop-only
+# (macOS/Windows/Linux) and ships no Android or iOS target.
+src-tauri/icons/android/
+src-tauri/icons/ios/
 tauri-critiqued-*.json
 
 # Tauri bundling output
