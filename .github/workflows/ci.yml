@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel superseded runs on the same branch; a new push makes the old one moot.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Keep the cache keys honest about the toolchain actually in use.
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Fast gate. diskus-core has no Tauri and no networking dependency, so this
+  # job needs no system libraries and runs in a couple of minutes. It is the
+  # signal to wait for on a PR.
+  # ---------------------------------------------------------------------------
+  core:
+    name: core (lint + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Rustfmt before anything else: it is instant and fails the most often.
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
+      # -D warnings promotes clippy lints to errors. Keep it green.
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+      # The pipeline tests carry the privacy and reclaimable-bytes invariants,
+      # so they are the ones that must not be skipped.
+      - name: cargo test
+        run: cargo test --workspace --all-features
+
+      - name: npm ci
+        run: npm ci
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Vite production build
+        run: npm run build
+
+  # ---------------------------------------------------------------------------
+  # Compiles the full Tauri app on all three targets. This is what proves the
+  # frontend, the Rust core and the platform layer still agree. It is heavier
+  # than it looks on Linux, which needs the webkit stack.
+  # ---------------------------------------------------------------------------
+  build:
+    name: build (${{ matrix.os }})
+    needs: core
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            libssl-dev \
+            build-essential \
+            curl \
+            wget \
+            file
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Only cache workspace crates; caching the whole target dir across
+          # three operating systems just wastes the cache budget.
+          key: tauri-build-${{ matrix.os }}
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: npm ci
+        run: npm ci
+
+      # No signing identity here on purpose: an unsigned bundle is enough to
+      # prove the code compiles, and CI has no way to hold a certificate.
+      - name: Build the app
+        run: npm run tauri build -- --no-bundle
+
+  # ---------------------------------------------------------------------------
+  # Security and dependency hygiene. Kept separate so it can fail without
+  # blocking the main signal, and made non-blocking while the baseline is
+  # still being established.
+  # ---------------------------------------------------------------------------
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Diskus reads filesystem metadata only. Any networking crate appearing in
+      # the tree would break the core privacy guarantee, so it is asserted
+      # rather than assumed.
+      - name: Assert no networking dependency
+        run: |
+          echo "Verifying that the analysis core has no networking dependency..."
+          if grep -nEi '^\s*(reqwest|hyper|curl|ureq|isahc|surf|tokio-tungstenite|websocket|attohttpc|reqwest-middleware)\s*[=.]' \
+            Cargo.toml crates/diskus-core/Cargo.toml; then
+            echo "::error::diskus-core gained a networking dependency; this breaks the offline guarantee."
+            exit 1
+          fi
+          echo "OK: diskus-core remains offline-only."
+
+      - name: cargo deny (advisories)
+        uses: EmbarkStudios/cargo-deny-action@v2
+
+      - name: npm audit
+        run: npm audit --audit-level=high

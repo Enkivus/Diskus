@@ -1,5 +1,10 @@
 # Diskus
 
+[![CI](https://github.com/Enkivus/Diskus/actions/workflows/ci.yml/badge.svg)](https://github.com/Enkivus/Diskus/actions/workflows/ci.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
+[![Tauri](https://img.shields.io/badge/tauri-2-24C8DB.svg)](https://tauri.app)
+
 Diskus scans a machine and reports what is consuming storage, then separates what is genuinely
 wasted from what is merely large. It looks for five specific things: growing log files, abandoned
 virtual machines, oversized user profiles, stale installers and package caches, and byte-identical
