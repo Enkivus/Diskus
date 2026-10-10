@@ -14,11 +14,6 @@ instructions.md
 instructions.local.md
 *.instructions.md
 
-# A stray nested checkout named after this project. It points at
-# github.com/Enkivus/Diskus and is empty; if it is yours, move it out of
-# here rather than letting it be swept into this repository.
-/Diskus/
-
 # ─────────────────────────────────────────────────────────────
 # Secrets & environment
 # ─────────────────────────────────────────────────────────────
