@@ -1,0 +1,29 @@
+[package]
+name = "diskus"
+description = "Diskus — find exactly what is consuming storage, and what is wasted."
+authors = ["Diskus"]
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lib]
+# The `_lib` suffix keeps the library name distinct from the binary name,
+# which would otherwise collide on Windows (see rust-lang/cargo#8519).
+name = "diskus_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+diskus-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+
+[dev-dependencies]
+tempfile = "3"

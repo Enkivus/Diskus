@@ -1,0 +1,23 @@
+[package]
+name = "diskus-core"
+description = "Cross-platform disk usage analysis: scanning, waste detection and reporting for Diskus."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+ignore = { workspace = true }
+blake3 = { workspace = true }
+dirs = { workspace = true }
+sysinfo = { workspace = true }
+log = { workspace = true }
+time = { workspace = true }
+
+[dev-dependencies]
+tempfile = "3"
+# Used only by tests, to age fixture files so staleness detectors fire.
+filetime = "0.2"

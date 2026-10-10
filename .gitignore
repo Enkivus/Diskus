@@ -1,0 +1,143 @@
+# ─────────────────────────────────────────────────────────────
+# Diskus — Local Context & Working Notes
+# ─────────────────────────────────────────────────────────────
+# instructions.md holds the complete build blueprint PLUS the live
+# "where the last model stopped" continuation context.
+# It is intentionally untracked: it is a local scratchpad that is
+# rewritten constantly, and it may contain machine-specific paths
+# and half-formed thinking that should not be shared.
+# The committed blueprint lives in README.md / docs/.
+#
+instructions.md
+
+# Any local override / scratch variants
+instructions.local.md
+*.instructions.md
+
+# A stray nested checkout named after this project. It points at
+# github.com/Enkivus/Diskus and is empty; if it is yours, move it out of
+# here rather than letting it be swept into this repository.
+/Diskus/
+
+# ─────────────────────────────────────────────────────────────
+# Secrets & environment
+# ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+!src-tauri/gen/schemas/*.json
+
+# ─────────────────────────────────────────────────────────────
+# Rust
+# ─────────────────────────────────────────────────────────────
+# NOTE: Cargo.lock is intentionally NOT ignored. Diskus is an
+# application, not a library — reproducible builds require it.
+/target/
+**/*.rs.bk
+*.pdb
+*.dSYM/
+*.dwo
+
+# ─────────────────────────────────────────────────────────────
+# Tauri (src-tauri)
+# ─────────────────────────────────────────────────────────────
+src-tauri/target/
+src-tauri/gen/schemas/
+src-tauri/gen/android/
+src-tauri/gen/apple/
+src-tauri/ios/Pods/
+src-tauri/ios/Podfile.lock
+src-tauri/Cargo.lock.bak
+tauri-critiqued-*.json
+
+# Tauri bundling output
+*.app/
+*.dmg
+*.msi
+*.deb
+*.AppImage
+*.rpm
+*.appx
+*.appxbundle
+
+# ─────────────────────────────────────────────────────────────
+# Node / Vite / React
+# The frontend lives at the repository root, so these paths are
+# NOT under a ui/ directory.
+# ─────────────────────────────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+.vite/
+ssr-dist/
+.pnpm-store/
+.npm/
+*.tsbuildinfo
+
+# ─────────────────────────────────────────────────────────────
+# Exported reports & scan artifacts (never commit user data)
+# ─────────────────────────────────────────────────────────────
+reports/
+*.diskus-report.html
+diskus-report-*.json
+diskus-report-*.csv
+diskus-report-*.md
+*.scan-cache
+scan-cache/
+.cache/
+
+# ─────────────────────────────────────────────────────────────
+# Editors & IDEs
+# ─────────────────────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.zed/
+
+# ─────────────────────────────────────────────────────────────
+# OS
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+.apdisk
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ─────────────────────────────────────────────────────────────
+# Logs, temp & crash dumps
+# ─────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.pid
+*.seed
+*.pid.lock
+
+# ─────────────────────────────────────────────────────────────
+# Test / coverage / profiling artifacts
+# ─────────────────────────────────────────────────────────────
+coverage/
+*.lcov
+.nyc_output/
+playwright-report/
+test-results/
+screenshots/
+*.profraw
+*.flamegraph.svg

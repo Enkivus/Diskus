@@ -1,0 +1,160 @@
+/**
+ * Design tokens.
+ *
+ * Every colour, duration and font in the product comes from here. Components
+ * never hard-code a hex value, which is what keeps the treemap, the charts, the
+ * findings list and the exported HTML report looking like one application.
+ *
+ * Two decisions worth explaining:
+ *
+ * 1. **Dark base, vibrant accents.** Storage data is the hero, so the surfaces
+ *    recede almost to black and the categorical ramp carries all the colour.
+ *    A light-grey dashboard would make a treemap look like a spreadsheet.
+ *
+ * 2. **One easing curve.** `--ease-out` is used everywhere. A consistent motion
+ *    language reads as polish in a way that individually-chosen curves do not.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* ── Surfaces ──────────────────────────────────────────────────────────
+     Five steps from deepest to most raised. Each is a real elevation step,
+     not a decorative one: sunken for wells, surface for panels, raised for
+     cards, overlay for popovers. */
+  --bg-base: #07090f;
+  --bg-sunken: #04060a;
+  --bg-surface: #0e121c;
+  --bg-raised: #151a27;
+  --bg-overlay: #1c2233;
+  --bg-hover: rgba(255, 255, 255, 0.045);
+  --bg-active: rgba(255, 255, 255, 0.075);
+
+  /* ── Borders ─────────────────────────────────────────────────────────── */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --text-primary: #eef2fa;
+  --text-secondary: #98a2b8;
+  --text-tertiary: #626c82;
+  --text-inverse: #07090f;
+
+  /* ── Brand ───────────────────────────────────────────────────────────── */
+  --accent: #6e8bff;
+  --accent-hover: #8aa1ff;
+  --accent-muted: rgba(110, 139, 255, 0.14);
+  --accent-ring: rgba(110, 139, 255, 0.4);
+
+  /* ── Semantic ────────────────────────────────────────────────────────── */
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --info: #60a5fa;
+
+  /* ── Severity ramp ─────────────────────────────────────────────────────
+     Matches the Rust `Severity` enum order exactly. */
+  --sev-critical: #ff4d6d;
+  --sev-high: #ff8a3d;
+  --sev-medium: #fbbf24;
+  --sev-low: #4ade80;
+  --sev-info: #60a5fa;
+
+  /* ── Categorical ramp ──────────────────────────────────────────────────
+     Twelve hues, ordered so adjacent indices are perceptually distinct. Used
+     for treemap fills, chart series and finding accents. */
+  --cat-1: #6e8bff;
+  --cat-2: #34d399;
+  --cat-3: #fbbf24;
+  --cat-4: #f87171;
+  --cat-5: #c084fc;
+  --cat-6: #22d3ee;
+  --cat-7: #fb923c;
+  --cat-8: #a3e635;
+  --cat-9: #f472b6;
+  --cat-10: #818cf8;
+  --cat-11: #2dd4bf;
+  --cat-12: #eab308;
+
+  /* ── Radii ───────────────────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* ── Elevation ───────────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55);
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 380ms;
+
+  /* ── Type ────────────────────────────────────────────────────────────── */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code",
+    Menlo, monospace;
+
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13px;
+  --fs-md: 15px;
+  --fs-lg: 18px;
+  --fs-xl: 24px;
+  --fs-2xl: 32px;
+  --fs-3xl: 44px;
+
+  /* ── Layout ──────────────────────────────────────────────────────────── */
+  --sidebar-w: 232px;
+  --sidebar-w-collapsed: 68px;
+  --topbar-h: 64px;
+  --gap: 16px;
+  --gap-lg: 24px;
+
+  /* Height of the native title bar that overlaps the content.
+   *
+   * macOS uses `titleBarStyle: Overlay`, which makes the window's traffic lights
+   * float *over* the webview instead of reserving a strip for them. Content must
+   * therefore be inset by the title bar height or it sits underneath — which is
+   * exactly what the traffic lights then overlap.
+   *
+   * Zero everywhere else: Windows and Linux draw a normal title bar outside the
+   * webview, so an inset there would just waste space. `main.tsx` sets
+   * `data-platform` so this only applies where it is needed. */
+  --titlebar-h: 0px;
+}
+
+[data-platform="macos"] {
+  --titlebar-h: 38px;
+}
+
+/**
+ * Respect the OS "reduce motion" setting.
+ *
+ * Collapsing every duration to zero rather than removing individual animations
+ * means components never need to know about the preference: their entrance
+ * transitions simply complete instantly.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
