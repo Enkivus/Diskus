@@ -1,5 +1,9 @@
 # Diskus
 
+<p align="center">
+  <img src="assets/diskus-icon.svg" alt="Diskus storage analysis icon" width="112" height="112">
+</p>
+
 [![CI](https://github.com/Enkivus/Diskus/actions/workflows/ci.yml/badge.svg)](https://github.com/Enkivus/Diskus/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
