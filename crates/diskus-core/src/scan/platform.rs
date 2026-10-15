@@ -251,9 +251,8 @@ pub fn volumes() -> Vec<Volume> {
 
 /// Bytes actually allocated for a path, or `None` when unavailable.
 ///
-/// This is the number that matters for reclaimable space: it correctly reports a
-/// 100 GiB thin-provisioned disk image as occupying only what it has been
-/// written to.
+/// On platforms that expose it, this correctly reports a thin-provisioned disk
+/// image as occupying only the space it has been written to.
 #[must_use]
 pub fn allocated_size(metadata: &std::fs::Metadata) -> Option<u64> {
     #[cfg(unix)]
@@ -263,8 +262,10 @@ pub fn allocated_size(metadata: &std::fs::Metadata) -> Option<u64> {
     }
     #[cfg(windows)]
     {
-        use std::os::windows::fs::MetadataExt;
-        metadata.file_size().checked_mul(metadata.allocation_size())
+        let _ = metadata;
+        // std::fs does not expose allocated size on stable Windows Rust.
+        // Callers fall back to apparent size when this is unavailable.
+        None
     }
     #[cfg(not(any(unix, windows)))]
     {

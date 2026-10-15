@@ -16,6 +16,7 @@ dirs = { workspace = true }
 sysinfo = { workspace = true }
 log = { workspace = true }
 time = { workspace = true }
+same-file = "1.0"
 
 [dev-dependencies]
 tempfile = "3"

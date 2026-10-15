@@ -113,7 +113,7 @@ struct Shared {
     denied: Mutex<Vec<PathBuf>>,
     counters: Mutex<Counters>,
     /// Inode identities of multi-linked files already counted.
-    seen_inodes: Mutex<HashMap<(u64, u64), ()>>,
+    seen_inodes: Mutex<HashMap<InodeKey, ()>>,
     truncated: Mutex<Option<String>>,
     cancelled: Mutex<bool>,
     /// Walker errors that could not be attributed to a specific path, because
@@ -428,7 +428,7 @@ impl Processor<'_> {
 
         // Hardlinks share one inode and one copy of the bytes. Counting each
         // link would inflate the total and make every downstream number wrong.
-        let deduped = kind == FileKind::File && self.is_duplicate_inode(&metadata);
+        let deduped = kind == FileKind::File && self.is_duplicate_inode(path, &metadata);
         let (size, on_disk) = match kind {
             FileKind::File => {
                 if deduped {
@@ -504,14 +504,11 @@ impl Processor<'_> {
 
     /// Whether this inode's bytes have already been counted.
     ///
-    /// Only files with a link count above one are ever recorded, so the map stays
-    /// tiny on a normal filesystem: an ordinary machine has thousands of
-    /// hardlinked system files, not millions.
-    fn is_duplicate_inode(&self, metadata: &std::fs::Metadata) -> bool {
-        if link_count(metadata) <= 1 {
-            return false;
-        }
-        let Some(key) = inode_key(metadata) else {
+    /// Unix can cheaply skip single-link files. Windows records file identities
+    /// through the safe `same-file` API because stable std metadata has no link
+    /// count accessor. The map is capped in either case.
+    fn is_duplicate_inode(&self, path: &Path, metadata: &std::fs::Metadata) -> bool {
+        let Some(key) = inode_key(path, metadata) else {
             return false;
         };
         let mut seen = self.shared.seen_inodes.lock().expect("inodes lock");
@@ -618,42 +615,40 @@ enum VisitOutcome {
 }
 
 /// Identity of a filesystem object, for hardlink deduplication.
+#[derive(Debug, Eq, Hash, PartialEq)]
+enum InodeKey {
+    #[cfg(unix)]
+    Unix(u64, u64),
+    #[cfg(windows)]
+    Windows(u64, u64),
+}
+
 #[cfg(unix)]
-fn inode_key(metadata: &std::fs::Metadata) -> Option<(u64, u64)> {
+fn inode_key(_: &Path, metadata: &std::fs::Metadata) -> Option<InodeKey> {
     use std::os::unix::fs::MetadataExt;
-    Some((metadata.dev(), metadata.ino()))
+    (metadata.nlink() > 1).then_some(InodeKey::Unix(metadata.dev(), metadata.ino()))
 }
 
 #[cfg(windows)]
-fn inode_key(metadata: &std::fs::Metadata) -> Option<(u64, u64)> {
-    use std::os::windows::fs::MetadataExt;
-    Some((
-        metadata.volume_serial_number()? as u64,
-        metadata.file_index()?,
-    ))
+fn inode_key(path: &Path, _: &std::fs::Metadata) -> Option<InodeKey> {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+
+    // The safe `same-file` API obtains the stable Windows file identity without
+    // relying on unstable std::fs::MetadataExt methods. Hash it twice with
+    // separate domains so the scan stores a compact key, not an open file handle.
+    let handle = same_file::Handle::from_path(path).ok()?;
+    let mut first = DefaultHasher::new();
+    0_u8.hash(&mut first);
+    handle.hash(&mut first);
+    let mut second = DefaultHasher::new();
+    1_u8.hash(&mut second);
+    handle.hash(&mut second);
+    Some(InodeKey::Windows(first.finish(), second.finish()))
 }
 
 #[cfg(not(any(unix, windows)))]
-fn inode_key(_: &std::fs::Metadata) -> Option<(u64, u64)> {
+fn inode_key(_: &Path, _: &std::fs::Metadata) -> Option<InodeKey> {
     None
-}
-
-/// How many directory entries point at this inode.
-#[cfg(unix)]
-fn link_count(metadata: &std::fs::Metadata) -> u64 {
-    use std::os::unix::fs::MetadataExt;
-    metadata.nlink()
-}
-
-#[cfg(windows)]
-fn link_count(metadata: &std::fs::Metadata) -> u64 {
-    use std::os::windows::fs::MetadataExt;
-    u64::from(metadata.number_of_links())
-}
-
-#[cfg(not(any(unix, windows)))]
-fn link_count(_: &std::fs::Metadata) -> u64 {
-    1
 }
 
 /// Roll every directory's subtree totals up from its children.

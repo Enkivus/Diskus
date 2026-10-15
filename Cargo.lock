@@ -846,6 +846,7 @@ dependencies = [
  "filetime",
  "ignore",
  "log",
+ "same-file",
  "serde",
  "serde_json",
  "sysinfo",
