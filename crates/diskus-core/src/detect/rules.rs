@@ -35,12 +35,11 @@ const KNOWN_LOG_DIRS: &[&str] = &[
 #[must_use]
 pub fn user_home_containing(path: &Path) -> Option<PathBuf> {
     let components: Vec<_> = path.components().collect();
+    // Scanned paths may come from a mounted volume created on another OS.
     let markers: &[&str] = if cfg!(windows) {
         &["users"]
-    } else if cfg!(target_os = "macos") {
-        &["users", "home"]
     } else {
-        &["home"]
+        &["users", "home"]
     };
 
     for (i, c) in components.iter().enumerate() {

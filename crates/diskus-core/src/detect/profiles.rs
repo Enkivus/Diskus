@@ -189,12 +189,12 @@ fn significant_children(result: &ScanResult, root: &Path) -> Vec<ScanNode> {
 /// The home directory a path is directly inside, if it is one.
 fn home_root_of(path: &Path) -> Option<PathBuf> {
     let components: Vec<_> = path.components().collect();
+    // Scans can include mounted volumes or backups from another OS, so accept
+    // both common Unix home roots regardless of the host running the scan.
     let markers: &[&str] = if cfg!(windows) {
         &["users"]
-    } else if cfg!(target_os = "macos") {
-        &["users", "home"]
     } else {
-        &["home"]
+        &["users", "home"]
     };
 
     for (i, c) in components.iter().enumerate() {

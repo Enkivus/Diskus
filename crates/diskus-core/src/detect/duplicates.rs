@@ -312,12 +312,10 @@ fn is_cache_path(path: &Path) -> bool {
         .to_string_lossy()
         .replace('\\', "/")
         .to_ascii_lowercase();
-    const CACHE: [&str; 7] = [
+    const CACHE: [&str; 5] = [
         "/library/caches",
         "/.cache/",
         "/appdata/local/temp",
-        "/temp/",
-        "/tmp/",
         "/.npm/",
         "/appdata/local/microsoft/windows/inetcache",
     ];
