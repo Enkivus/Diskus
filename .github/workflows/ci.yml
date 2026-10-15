@@ -47,13 +47,16 @@ jobs:
         run: cargo fmt --all -- --check
 
       # -D warnings promotes clippy lints to errors. Keep it green.
+      # Scoped to diskus-core on purpose: the src-tauri crate pulls in GTK/GLib
+      # system libraries that are not installed in this job. The platform layer
+      # is linted in the build job, which has those libraries available.
       - name: cargo clippy
-        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+        run: cargo clippy -p diskus-core --all-targets --all-features -- -D warnings
 
       # The pipeline tests carry the privacy and reclaimable-bytes invariants,
       # so they are the ones that must not be skipped.
       - name: cargo test
-        run: cargo test --workspace --all-features
+        run: cargo test -p diskus-core --all-features
 
       - name: npm ci
         run: npm ci
@@ -117,6 +120,11 @@ jobs:
       # prove the code compiles, and CI has no way to hold a certificate.
       - name: Build the app
         run: npm run tauri build -- --no-bundle
+
+      # The whole workspace, including src-tauri, gets linted here because this
+      # is the only job that installs the GTK/GLib system libraries.
+      - name: cargo clippy (workspace)
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
 
   # ---------------------------------------------------------------------------
   # Security and dependency hygiene. Kept separate so it can fail without
